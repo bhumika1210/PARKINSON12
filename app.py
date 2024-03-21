@@ -263,22 +263,22 @@ if LOGGED_IN:
                 st.write(df)
 
 
-            if (selected == 'Visual Input Spiral Model'): 
+      if (selected == 'Visual Input Spiral Model'): 
 
-               # Add the second part of the script
-               st.header("Detecting Parkinson's Disease - Visual Input Spiral Model")
+         # Add the second part of the script
+         st.header("Detecting Parkinson's Disease - Visual Input Spiral Model")
 
-               st.write("Upload an image to classify into Healthy or Parkinson's.")
-               st.warning("Warning: Supported image formats: PNG, JPG, JPEG.")
+         st.write("Upload an image to classify into Healthy or Parkinson's.")
+         st.warning("Warning: Supported image formats: PNG, JPG, JPEG.")
 
-               uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+         uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
 
-            if uploaded_file is not None:
+         if uploaded_file is not None:
                # Display the uploaded image
                st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
 
-            # Process the image and make a prediction
-            if st.button("Classify"):
+         # Process the image and make a prediction
+         if st.button("Classify"):
                 # Save the uploaded image temporarily
                 user_input_filename = "user_input.png"
                 with open(user_input_filename, "wb") as f:

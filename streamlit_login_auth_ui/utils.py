@@ -25,7 +25,6 @@ def check_usr_pass(username: str, password: str) -> bool:
                 pass
     return False
 
-
 def load_lottieurl(url: str) -> str:
     """
     Fetches the lottie animation using the URL.
