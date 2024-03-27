@@ -8,7 +8,7 @@ Pillow==9.4.0
 pickle-mixin==1.0.2
 scikit-learn==1.2.1
 scipy==1.10.1
-streamlit==1.19.0
+streamlit==1.13.0
 tensorflow==2.11.0
 urllib3==1.26.14
 streamlit_drawable_canvas==0.8.0
