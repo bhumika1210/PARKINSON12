@@ -284,7 +284,7 @@ if LOGGED_IN:
                     f.write(uploaded_file.getvalue())
 
                 # Load the trained model
-                model = load_model("spiral/keras_Model.h5", compile=False)
+                model = load_model("spiral/keras_model.h5", compile=False)
 
                 # Load the labels
                 class_names = open("spiral/labels.txt", "r").readlines()
