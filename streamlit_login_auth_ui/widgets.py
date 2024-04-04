@@ -17,7 +17,6 @@ from .utils import send_passwd_in_email
 from .utils import change_passwd
 from .utils import check_current_passwd
 
-
 class __login__:
     """
     Builds the UI for the Login/ Sign Up page.

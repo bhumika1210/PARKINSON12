@@ -387,9 +387,14 @@ if LOGGED_IN:
             # Open the uploaded image
             image = Image.open(uploaded_file).convert("RGB")
 
+<<<<<<< HEAD
             # Resize the image to be at least 224x224 and then crop from the center
             size = (224, 224)
             image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+=======
+                # Load the trained model
+                model = load_model("spiral/keras_model.h5", compile=False)
+>>>>>>> 69019ae6d416b198425f78ad92ba9616fb5424b7
 
             # Convert the image into a numpy array
             image_array = np.asarray(image)
