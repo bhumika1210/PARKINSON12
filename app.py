@@ -1,10 +1,10 @@
 import streamlit as st
 from streamlit_login_auth_ui.widgets import __login__
 from streamlit_extras.switch_page_button import switch_page
-import cv2
 import os
 from tensorflow.keras.models import load_model
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
+from PIL import ImageFont
 import numpy as np
 from tensorflow.keras.preprocessing.image import img_to_array
 import pandas as pd
@@ -12,8 +12,12 @@ from streamlit_drawable_canvas import st_canvas
 import uuid
 import pickle
 from streamlit_option_menu import option_menu
+from reportlab.lib.utils import ImageReader
 import joblib 
-
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 
 # Create a session state to store login status and username
 if 'login_state' not in st.session_state:
@@ -129,6 +133,40 @@ if LOGGED_IN:
 
          st.write("Please enter the medical record values in the input fields above and click the 'Predict' button.")
 
+         
+
+         # Function to generate PDF
+         def generate_pdf(data, prediction):
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+
+            # Draw background image containing logo and disclaimer
+            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
+
+            # Set text color to black
+            c.setFillColorRGB(0, 0, 0)  
+
+            # Draw report content
+            c.drawString(100, 570, "Parkinson's Disease Prediction Report - Voice Model")
+            # c.drawString(100, 550, "------------------------------------------")
+            y_position = 620
+            # for key, value in data.items():
+            #    c.drawString(100, y_position, f"{key}: {value}")
+            #    y_position -= 20
+            c.drawString(100, y_position - 20, "Prediction Result:")
+            if prediction == 1:
+               c.drawString(100, y_position - 100, "Based on the input data, the person is likely to have Parkinson's disease.")
+            else:
+               c.drawString(100, y_position - 100, "Based on the input data, the person is not likely to have Parkinson's disease.")
+
+            c.save()
+            buffer.seek(0)
+            return buffer
+
+         # Generate and download PDF
+         pdf_buffer = generate_pdf(user_data.to_dict(orient='records')[0], prediction)
+         st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
 
    if (selected == 'Spiral Model'):
       # sidebar navigation
@@ -142,16 +180,82 @@ if LOGGED_IN:
     
 
       if (selected == 'Dynamic Spiral Model'): 
+      
+         # Function to generate a unique filename for user input
+         def generate_user_input_filename():
+            unique_id = uuid.uuid4().hex
+            filename = f"user_input_{unique_id}.png"
+            return filename
+
+         # Function to generate PDF
+         def generate_pdf(classified_label, prediction, image_data):
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+            
+            # Set font
+            c.setFont("Helvetica", 12)
+
+            # Draw background image containing logo and disclaimer
+            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
+
+            # Set text color to black
+            c.setFillColorRGB(0, 0, 0)  
+
+            # Write text to PDF
+            c.drawString(100, 380, "Parkinson's Disease Prediction Report - spiral model")
+            # c.drawString(100, 730, "------------------------------------------")
+            c.drawString(100, 350, "Spiral Drawing Classification:")
+            c.drawString(100, 330, classified_label)
+            
+            c.drawString(100, 630, "Spiral Drawing: ")
+            # Draw the spiral image on the PDF
+            pil_image = Image.fromarray(image_data.astype("uint8"), "RGBA")
+            c.drawImage(ImageReader(pil_image), 100, 400, width=200, height=200)
+            
+            c.save()
+            buffer.seek(0)
+            return buffer
+
+
+         # Function to predict Parkinson's disease
+         def predict_parkinsons(image_data):
+            # Load your model and labels here
+            best_model = load_model("spiral/keras_model.h5", compile=False)
+            class_names = open("spiral/labels.txt", "r").readlines()
+
+            # Preprocess the image
+            image = Image.fromarray(image_data.astype("uint8"), "RGBA")
+            size = (224, 224)
+            image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+            image_rgb = image.convert("RGB")  # Convert RGBA to RGB
+            image_array = np.asarray(image_rgb)
+            normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+            data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+            data[0] = normalized_image_array
+
+            # Make prediction
+            prediction = best_model.predict(data)
+            index = np.argmax(prediction)
+            class_name = class_names[index]
+            confidence_score = prediction[0][index]
+
+            # Prepare result message
+            detection_result = (f"The model has detected {class_name[2:]}")
+
+            return detection_result, confidence_score
+
+
+         # Main interface
          st.header("Detecting Parkinson's Disease - Dynamic Spiral Model")
+
+         # Specify canvas parameters in application
          with st.sidebar:
-            # Specify canvas parameters in application
             drawing_mode = "freedraw"
-
-            stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
-            stroke_color = st.sidebar.color_picker("Stroke colour : ")
-            bg_color = st.sidebar.color_picker("Background colour : ", "#eee")
-
-            realtime_update = st.sidebar.checkbox("Update in realtime", True)
+            stroke_width = st.slider("Stroke width: ", 1, 25, 3)
+            stroke_color = st.color_picker("Stroke colour : ")
+            bg_color = st.color_picker("Background colour : ", "#eee")
+            realtime_update = st.checkbox("Update in realtime", True)
 
          # Split the layout into two columns
          col1, col2 = st.columns(2)
@@ -163,109 +267,114 @@ if LOGGED_IN:
             # Create a canvas component
             st.subheader("Drawable Interface")
             canvas_image = st_canvas(
-                fill_color="rgba(255, 165, 0, 0.3)",
-                stroke_width=stroke_width,
-                stroke_color=stroke_color,
-                background_color=bg_color,
-                width=canvas_size,
-                height=canvas_size,
-                update_streamlit=realtime_update,
-                drawing_mode=drawing_mode,
-                key="canvas",
+               fill_color="rgba(255, 165, 0, 0.3)",
+               stroke_width=stroke_width,
+               stroke_color=stroke_color,
+               background_color=bg_color,
+               width=canvas_size,
+               height=canvas_size,
+               update_streamlit=realtime_update,
+               drawing_mode=drawing_mode,
+               key="canvas",
             )
 
          with col2:
             st.subheader("Overview")
             if canvas_image.image_data is not None:
-                # Get the numpy array (4-channel RGBA 100,100,4)
-                input_numpy_array = np.array(canvas_image.image_data)
-                # Get the RGBA PIL image
-                input_image = Image.fromarray(input_numpy_array.astype("uint8"), "RGBA")
-                st.image(input_image, use_column_width=True)
+               # Get the numpy array (4-channel RGBA 100,100,4)
+               input_numpy_array = np.array(canvas_image.image_data)
+               # Get the RGBA PIL image
+               input_image = Image.fromarray(input_numpy_array.astype("uint8"), "RGBA")
+               st.image(input_image, use_column_width=True)
 
+         # Submit button to predict
+         submit = st.button(label="Submit Sketch")
+         if submit:
+            st.subheader("Output")
+            with st.spinner(text="This may take a moment..."):
+               # Get the image data from the CanvasResult object
+               image_data = np.array(canvas_image.image_data)
+               # Make prediction
+               classified_label, prediction = predict_parkinsons(image_data)
+               # Generate PDF
+               pdf_buffer = generate_pdf(classified_label, prediction, image_data)
+               
+               # Print prediction result
+               st.write(f"Spiral Drawing Classification: {classified_label}")
+               
+               # Download PDF
+               st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
+
+      if (selected == 'Visual Input Spiral Model'): 
+
+         # Function to generate a unique filename for user input
          def generate_user_input_filename():
             unique_id = uuid.uuid4().hex
             filename = f"user_input_{unique_id}.png"
             return filename
 
-         def predict_parkinsons(img_path):
-            best_model = load_model("spiral/keras_model.h5", compile=False)
+         # Function to generate PDF
+         def generate_pdf(classified_label, confidence_score, image_data):
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+            
+            # Set font
+            c.setFont("Helvetica", 12)
 
-            # Load the labels
+            # Draw background image containing logo and disclaimer
+            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
+
+            # Set text color to black
+            c.setFillColorRGB(0, 0, 0) 
+
+            c.drawString(100, 630, "Spiral Drawing: ")
+            # Draw the uploaded image on the PDF
+            pil_image = Image.fromarray(image_data.astype("uint8"), "RGB")
+            c.drawImage(ImageReader(pil_image), 100, 400, width=200, height=200)  # Adjusted y coordinate
+
+            # Write text to PDF
+            c.drawString(100, 380, "Parkinson's Disease Prediction Report")
+            # c.drawString(100, 730, "------------------------------------------")
+            c.drawString(100, 350, "Spiral Drawing Classification:")
+            c.drawString(100, 330, f"{classified_label}")
+            
+            # Add predicted label and confidence score
+            # c.drawString(100, 360, f"Predicted Label: {classified_label}")
+            
+            c.save()
+            buffer.seek(0)
+            return buffer
+
+
+         # Function to predict Parkinson's disease
+         def predict_parkinsons(image_data):
+            # Load your model and labels here
+            model = load_model("spiral/keras_Model.h5", compile=False)
             class_names = open("spiral/labels.txt", "r").readlines()
 
-            # Create the array of the right shape to feed into the keras model
+            # Create the array of the right shape to feed into the Keras model
             data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 
-            # Get the numpy array (4-channel RGBA 100,100,4)
-            input_numpy_array = np.array(img_path.image_data)
-
-            # Get the RGBA PIL image
-            input_image = Image.fromarray(input_numpy_array.astype("uint8"), "RGBA")
-
-            # Generate a unique filename for the user input
-            user_input_filename = generate_user_input_filename()
-
-            # Save the image with the generated filename
-            input_image.save(user_input_filename)
-            print("Image Saved!")   
-
-            # Replace this with the path to your image
-            image = Image.open(user_input_filename).convert("RGB")
-
-            # resizing the image to be at least 224x224 and then cropping from the center
-            size = (224, 224)
-            image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
-
-            # turn the image into a numpy array
-            image_array = np.asarray(image)
-
             # Normalize the image
-            normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+            normalized_image_array = (image_data.astype(np.float32) / 127.5) - 1
 
             # Load the image into the array
             data[0] = normalized_image_array
 
-            # Predicts the model
-            prediction = best_model.predict(data)
-            index = np.argmax(prediction)
-            class_name = class_names[index]
-            confidence_score = prediction[0][index]
+            # Make prediction
+            prediction = model.predict(data)
+            confidence_score = prediction[0][0]  # Assuming 0 is the index for Parkinson's class
 
-            Detection_Result = f"The model has detected {class_name[2:]}, with Confidence Score: {str(np.round(confidence_score * 100))[:-2]}%."
-            os.remove(user_input_filename)
-            print("Image Removed!")
-            return Detection_Result, prediction
+            # Prepare result message
+            if confidence_score >= 0.5:
+               classified_label = "Healthy"
+            else:
+               classified_label = "Parkinson's"
 
-         submit = st.button(label="Submit Sketch")
-         if submit:
-            st.subheader("Output")
-            classified_label, prediction = predict_parkinsons(canvas_image)
-            with st.spinner(text="This may take a moment..."):
-                st.write(classified_label)
+            return classified_label, confidence_score
 
-                class_names = open("spiral/labels.txt", "r").readlines()
-
-                data = {
-                    "Class": class_names,
-                    "Confidence Score": prediction[0],
-                }
-
-                df = pd.DataFrame(data)
-
-                df["Confidence Score"] = df["Confidence Score"].apply(
-                    lambda x: f"{str(np.round(x*100))[:-2]}%"
-                )
-
-                df["Class"] = df["Class"].apply(lambda x: x.split(" ")[1])
-
-                st.subheader("Confidence Scores on other classes:")
-                st.write(df)
-
-
-      if (selected == 'Visual Input Spiral Model'): 
-
-         # Add the second part of the script
+         # Main interface
          st.header("Detecting Parkinson's Disease - Visual Input Spiral Model")
 
          st.write("Upload an image to classify into Healthy or Parkinson's.")
@@ -273,52 +382,31 @@ if LOGGED_IN:
 
          uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
 
-         if uploaded_file is not None:
-               # Display the uploaded image
-               st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-
          # Process the image and make a prediction
-         if st.button("Classify"):
-                # Save the uploaded image temporarily
-                user_input_filename = "user_input.png"
-                with open(user_input_filename, "wb") as f:
-                    f.write(uploaded_file.getvalue())
+         if st.button("Classify") and uploaded_file is not None:
+            # Open the uploaded image
+            image = Image.open(uploaded_file).convert("RGB")
 
-                # Load the trained model
-                model = load_model("spiral/keras_Model.h5", compile=False)
+            # Resize the image to be at least 224x224 and then crop from the center
+            size = (224, 224)
+            image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
 
-                # Load the labels
-                class_names = open("spiral/labels.txt", "r").readlines()
+            # Convert the image into a numpy array
+            image_array = np.asarray(image)
 
-                # Create the array of the right shape to feed into the Keras model
-                data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+            # Make prediction
+            classified_label, confidence_score = predict_parkinsons(image_array)
 
-                # Open the uploaded image
-                image = Image.open(user_input_filename).convert("RGB")
+            # Print prediction for debugging
+            print("Predicted Label:", classified_label)
+            print("Confidence Score:", confidence_score)
 
-                # Resize the image to be at least 224x224 and then crop from the center
-                size = (224, 224)
-                image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+            # Generate PDF with prediction
+            pdf_buffer = generate_pdf(classified_label, confidence_score, image_array)
 
-                # Convert the image into a numpy array
-                image_array = np.asarray(image)
+            # Display the result
+            st.subheader("Classification Result:")
+            st.write(f"The model has classified the image as {classified_label} ")
 
-                # Normalize the image
-                normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
-
-                # Load the image into the array
-                data[0] = normalized_image_array
-
-                # Make a prediction
-                prediction = model.predict(data)
-                confidence_score = prediction[0][0]  # Assuming 0 is the index for Parkinson's class
-
-                # Display the result
-                st.subheader("Classification Result:")
-                if confidence_score >= 0.5:
-                    st.write("The model has classified the image as Healthy.")
-                else:
-                    st.write("The model has classified the image as Parkinson's.")
-
-                # Remove the temporary image file
-                os.remove(user_input_filename)
+            # Download PDF
+            st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_classification_report.pdf", mime="application/pdf", key="pdf-download")
