@@ -51,122 +51,10 @@ if LOGGED_IN:
    with st.sidebar:
     
         selected = option_menu('Parkinson Detection', 
-                           ['Voice Model',
-                            'Spiral Model'],
-                           icons=['mic','tornado'],
+                           ['Spiral Model',
+                            'Voice Model'],
+                           icons=['tornado','mic'],
                            default_index=0)
-
-   if (selected == 'Voice Model'):
-    
-      # Function to predict Parkinson's disease
-      def predict_parkinsons(data):
-         # Transform the input data using the pre-trained scaler
-         scaled_data = scaler.transform(data)
-         # Make predictions
-         prediction = model.predict(scaled_data)
-         return prediction[0]
-
-      st.title("Parkinson's Disease Prediction")
-
-      st.write("Enter the following medical record values:")
-
-      # Create input fields for medical record parameters
-      mdvp_fo = st.number_input("MDVP:Fo (Hz)")
-      mdvp_fhi = st.number_input("MDVP:Fhi (Hz)")
-      mdvp_flo = st.number_input("MDVP:Flo (Hz)")
-      mdvp_jitter = st.number_input("MDVP:Jitter (%)")
-      mdvp_jitter_abs = st.number_input("MDVP:Jitter(Abs)")
-      mdvp_rap = st.number_input("MDVP:RAP")
-      mdvp_ppq = st.number_input("MDVP:PPQ")
-      jitter_ddp = st.number_input("Jitter:DDP")
-      mdvp_shimmer = st.number_input("MDVP:Shimmer")
-      mdvp_shimmer_db = st.number_input("MDVP:Shimmer(dB)")
-      shimmer_apq3 = st.number_input("Shimmer:APQ3")
-      shimmer_apq5 = st.number_input("Shimmer:APQ5")
-      mdvp_apq = st.number_input("MDVP:APQ")
-      shimmer_dda = st.number_input("Shimmer:DDA")
-      nhr = st.number_input("NHR")
-      hnr = st.number_input("HNR")
-      rpde = st.number_input("RPDE")
-      dfa = st.number_input("DFA")
-      spread1 = st.number_input("spread1")
-      spread2 = st.number_input("spread2")
-      d2 = st.number_input("D2")
-      ppe = st.number_input("PPE")
-
-      # Create a button to predict
-      if st.button("Predict"):
-         # Create a DataFrame from the user input
-         user_data = pd.DataFrame({
-            "MDVP:Fo(Hz)": [mdvp_fo],
-            "MDVP:Fhi(Hz)": [mdvp_fhi],
-            "MDVP:Flo(Hz)": [mdvp_flo],
-            "MDVP:Jitter(%)": [mdvp_jitter],
-            "MDVP:Jitter(Abs)": [mdvp_jitter_abs],
-            "MDVP:RAP": [mdvp_rap],
-            "MDVP:PPQ": [mdvp_ppq],
-            "Jitter:DDP": [jitter_ddp],
-            "MDVP:Shimmer": [mdvp_shimmer],
-            "MDVP:Shimmer(dB)": [mdvp_shimmer_db],
-            "Shimmer:APQ3": [shimmer_apq3],
-            "Shimmer:APQ5": [shimmer_apq5],
-            "MDVP:APQ": [mdvp_apq],
-            "Shimmer:DDA": [shimmer_dda],
-            "NHR": [nhr],
-            "HNR": [hnr],
-            "RPDE": [rpde],
-            "DFA": [dfa],
-            "spread1": [spread1],
-            "spread2": [spread2],
-            "D2": [d2],
-            "PPE": [ppe]
-         })
-
-         # Make a prediction
-         prediction = predict_parkinsons(user_data)
-
-         # Display the prediction result
-         if prediction == 1:
-               st.error("Based on the input data, the person is likely to have Parkinson's disease.")
-         else:
-               st.success("Based on the input data, the person is not likely to have Parkinson's disease.")
-
-         st.write("Please enter the medical record values in the input fields above and click the 'Predict' button.")
-
-         
-
-         # Function to generate PDF
-         def generate_pdf(data, prediction):
-            buffer = io.BytesIO()
-            c = canvas.Canvas(buffer, pagesize=letter)
-
-            # Draw background image containing logo and disclaimer
-            background_image_path = "receipt3.png"  # Replace with the path to your background image
-            c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
-
-            # Set text color to black
-            c.setFillColorRGB(0, 0, 0)  
-
-            # Draw report content
-            c.drawString(100, 570, "Parkinson's Disease Prediction Report - Voice Model")
-            # c.drawString(100, 550, "------------------------------------------")
-            y_position = 620
-            # for key, value in data.items():
-            #    c.drawString(100, y_position, f"{key}: {value}")
-            #    y_position -= 20
-            c.drawString(100, y_position - 20, "Prediction Result:")
-            if prediction == 1:
-               c.drawString(100, y_position - 100, "Based on the input data, the person is likely to have Parkinson's disease.")
-            else:
-               c.drawString(100, y_position - 100, "Based on the input data, the person is not likely to have Parkinson's disease.")
-
-            c.save()
-            buffer.seek(0)
-            return buffer
-
-         # Generate and download PDF
-         pdf_buffer = generate_pdf(user_data.to_dict(orient='records')[0], prediction)
-         st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
 
    if (selected == 'Spiral Model'):
       # sidebar navigation
@@ -387,14 +275,9 @@ if LOGGED_IN:
             # Open the uploaded image
             image = Image.open(uploaded_file).convert("RGB")
 
-<<<<<<< HEAD
             # Resize the image to be at least 224x224 and then crop from the center
             size = (224, 224)
             image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
-=======
-                # Load the trained model
-                model = load_model("spiral/keras_model.h5", compile=False)
->>>>>>> 69019ae6d416b198425f78ad92ba9616fb5424b7
 
             # Convert the image into a numpy array
             image_array = np.asarray(image)
@@ -415,3 +298,115 @@ if LOGGED_IN:
 
             # Download PDF
             st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_classification_report.pdf", mime="application/pdf", key="pdf-download")
+
+   if (selected == 'Voice Model'):
+    
+      # Function to predict Parkinson's disease
+      def predict_parkinsons(data):
+         # Transform the input data using the pre-trained scaler
+         scaled_data = scaler.transform(data)
+         # Make predictions
+         prediction = model.predict(scaled_data)
+         return prediction[0]
+
+      st.title("Parkinson's Disease Prediction")
+
+      st.write("Enter the following medical record values:")
+
+      # Create input fields for medical record parameters
+      mdvp_fo = st.number_input("MDVP:Fo (Hz)")
+      mdvp_fhi = st.number_input("MDVP:Fhi (Hz)")
+      mdvp_flo = st.number_input("MDVP:Flo (Hz)")
+      mdvp_jitter = st.number_input("MDVP:Jitter (%)")
+      mdvp_jitter_abs = st.number_input("MDVP:Jitter(Abs)")
+      mdvp_rap = st.number_input("MDVP:RAP")
+      mdvp_ppq = st.number_input("MDVP:PPQ")
+      jitter_ddp = st.number_input("Jitter:DDP")
+      mdvp_shimmer = st.number_input("MDVP:Shimmer")
+      mdvp_shimmer_db = st.number_input("MDVP:Shimmer(dB)")
+      shimmer_apq3 = st.number_input("Shimmer:APQ3")
+      shimmer_apq5 = st.number_input("Shimmer:APQ5")
+      mdvp_apq = st.number_input("MDVP:APQ")
+      shimmer_dda = st.number_input("Shimmer:DDA")
+      nhr = st.number_input("NHR")
+      hnr = st.number_input("HNR")
+      rpde = st.number_input("RPDE")
+      dfa = st.number_input("DFA")
+      spread1 = st.number_input("spread1")
+      spread2 = st.number_input("spread2")
+      d2 = st.number_input("D2")
+      ppe = st.number_input("PPE")
+
+      # Create a button to predict
+      if st.button("Predict"):
+         # Create a DataFrame from the user input
+         user_data = pd.DataFrame({
+            "MDVP:Fo(Hz)": [mdvp_fo],
+            "MDVP:Fhi(Hz)": [mdvp_fhi],
+            "MDVP:Flo(Hz)": [mdvp_flo],
+            "MDVP:Jitter(%)": [mdvp_jitter],
+            "MDVP:Jitter(Abs)": [mdvp_jitter_abs],
+            "MDVP:RAP": [mdvp_rap],
+            "MDVP:PPQ": [mdvp_ppq],
+            "Jitter:DDP": [jitter_ddp],
+            "MDVP:Shimmer": [mdvp_shimmer],
+            "MDVP:Shimmer(dB)": [mdvp_shimmer_db],
+            "Shimmer:APQ3": [shimmer_apq3],
+            "Shimmer:APQ5": [shimmer_apq5],
+            "MDVP:APQ": [mdvp_apq],
+            "Shimmer:DDA": [shimmer_dda],
+            "NHR": [nhr],
+            "HNR": [hnr],
+            "RPDE": [rpde],
+            "DFA": [dfa],
+            "spread1": [spread1],
+            "spread2": [spread2],
+            "D2": [d2],
+            "PPE": [ppe]
+         })
+
+         # Make a prediction
+         prediction = predict_parkinsons(user_data)
+
+         # Display the prediction result
+         if prediction == 1:
+               st.error("Based on the input data, the person is likely to have Parkinson's disease.")
+         else:
+               st.success("Based on the input data, the person is not likely to have Parkinson's disease.")
+
+         st.write("Please enter the medical record values in the input fields above and click the 'Predict' button.")
+
+         
+
+         # Function to generate PDF
+         def generate_pdf(data, prediction):
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=letter)
+
+            # Draw background image containing logo and disclaimer
+            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
+
+            # Set text color to black
+            c.setFillColorRGB(0, 0, 0)  
+
+            # Draw report content
+            c.drawString(100, 570, "Parkinson's Disease Prediction Report - Voice Model")
+            # c.drawString(100, 550, "------------------------------------------")
+            y_position = 620
+            # for key, value in data.items():
+            #    c.drawString(100, y_position, f"{key}: {value}")
+            #    y_position -= 20
+            c.drawString(100, y_position - 20, "Prediction Result:")
+            if prediction == 1:
+               c.drawString(100, y_position - 100, "Based on the input data, the person is likely to have Parkinson's disease.")
+            else:
+               c.drawString(100, y_position - 100, "Based on the input data, the person is not likely to have Parkinson's disease.")
+
+            c.save()
+            buffer.seek(0)
+            return buffer
+
+         # Generate and download PDF
+         pdf_buffer = generate_pdf(user_data.to_dict(orient='records')[0], prediction)
+         st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
