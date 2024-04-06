@@ -18,8 +18,6 @@ import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from datetime import datetime
-import json
 
 # Create a session state to store login status and username
 if 'login_state' not in st.session_state:
@@ -36,17 +34,6 @@ __login__obj = __login__(auth_token="courier_auth_token",
 def build_login_ui():
     return __login__obj.build_login_ui()
 
-# def get_user_info():
-#       if st.session_state.login_state:
-#          st.write(f'**Username:** {st.session_state.username}')
-         
-      
-#       # Add other user information retrieval code here
-#       else:
-#          st.warning("Please log in to view user information.")
-
-
-
 LOGGED_IN = build_login_ui()
 
 if LOGGED_IN:
@@ -59,31 +46,15 @@ if LOGGED_IN:
    scaler = joblib.load("voice/tools/scaler_joblib")
    drawing_model = load_model("spiral/keras_model.h5", compile=False)
    image_model = load_model("spiral/keras_model.h5", compile=False)
-   
+
    # sidebar navigation
    with st.sidebar:
-      st.markdown(
-            f'<h2 style="font-size:18px;margin-bottom: 0;">Hi,</h2>'
-            f'<p style="font-size:28px; color:red;">{st.session_state.username}</p>', 
-            unsafe_allow_html=True
-        )
-      
-      
-      selected = option_menu('Parkinson Detection', 
-                               ['Spiral Model',
-                                'Voice Model'],  # Add 'Data' option
-                               icons=['tornado','mic'],  # Add icon for 'Data'
-                               default_index=0)  
-        
-        
-   
-
-   # if (selected == 'Data'):
-   #     st.write(f'**Username:** {st.session_state.username}')
-   #     st.write(f'**Name:** {st.session_state.name}')
-   #     st.write(f'**Email:** {st.session_state.username}')
- 
-      
+    
+        selected = option_menu('Parkinson Detection', 
+                           ['Spiral Model',
+                            'Voice Model'],
+                           icons=['tornado','mic'],
+                           default_index=0)
 
    if (selected == 'Spiral Model'):
       # sidebar navigation
@@ -94,6 +65,7 @@ if LOGGED_IN:
                             'Visual Input Spiral Model'],
                            icons=['pen','camera'],
                            default_index=0)
+    
 
       if (selected == 'Dynamic Spiral Model'): 
       
@@ -102,19 +74,9 @@ if LOGGED_IN:
             unique_id = uuid.uuid4().hex
             filename = f"user_input_{unique_id}.png"
             return filename
-         def load_user_data(username):
-            try:
-               with open('_secret_auth_.json', 'r') as file:
-                     data = json.load(file)
-                     if isinstance(data, list):
-                        for user in data:
-                           if user.get('username') == username:
-                                 return user
-            except (FileNotFoundError, json.JSONDecodeError):
-               return None
-            
+
          # Function to generate PDF
-         def generate_pdf(classified_label,user_info, prediction, image_data):
+         def generate_pdf(classified_label, prediction, image_data):
             buffer = io.BytesIO()
             c = canvas.Canvas(buffer, pagesize=letter)
             
@@ -127,39 +89,18 @@ if LOGGED_IN:
 
             # Set text color to black
             c.setFillColorRGB(0, 0, 0)  
-            if user_info:
-               username = user_info.get('name', 'Unknown')
-               email = user_info.get('email', 'Unknown')
 
-               c.setFont("Helvetica", 15) 
-               c.setFillColorRGB(0, 0, 0)  
-               # Draw user information before main report content
-               c.drawString(80, 640, f"Name: {username}")
-               c.drawString(80, 620, f"Email: {email}")
-               # Time of report generation
-               current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-               c.drawString(80, 600, f"Time: {current_time}")
-
-               # Main report content
-               c.setFont("Helvetica-Bold", 15)
-               # voice_image_path = "voice.jpeg"
-               # c.drawImage(voice_image_path, x=80, y=530, width=40, height=40)
-
-               c.setFillColorRGB(0.647, 0.165, 0.165)  
-               c.drawString(100, 530, "Parkinson's Disease Prediction Report - Dynamic Spiral Model")
-         
-               c.drawString(100, 230, "Spiral Drawing Classification:")
-               c.drawString(100, 200, classified_label)
-               
-               c.drawString(100, 480, "Spiral Drawing: ")
-               # Draw the spiral image on the PDF
-               pil_image = Image.fromarray(image_data.astype("uint8"), "RGBA")
-               c.drawImage(ImageReader(pil_image), 225, 270, width=200, height=200)
-               
-            else:
-               c.drawString(100, 550, "User data not available")
-
-
+            # Write text to PDF
+            c.drawString(100, 380, "Parkinson's Disease Prediction Report - spiral model")
+            # c.drawString(100, 730, "------------------------------------------")
+            c.drawString(100, 350, "Spiral Drawing Classification:")
+            c.drawString(100, 330, classified_label)
+            
+            c.drawString(100, 630, "Spiral Drawing: ")
+            # Draw the spiral image on the PDF
+            pil_image = Image.fromarray(image_data.astype("uint8"), "RGBA")
+            c.drawImage(ImageReader(pil_image), 100, 400, width=200, height=200)
+            
             c.save()
             buffer.seek(0)
             return buffer
@@ -188,7 +129,7 @@ if LOGGED_IN:
             confidence_score = prediction[0][index]
 
             # Prepare result message
-            detection_result = (f"The model has detected {class_name[2:]} ")
+            detection_result = (f"The model has detected{class_name[2:]}")
 
             return detection_result, confidence_score
 
@@ -242,13 +183,9 @@ if LOGGED_IN:
                # Get the image data from the CanvasResult object
                image_data = np.array(canvas_image.image_data)
                # Make prediction
-               username = st.session_state.username
-
-               # Load user data based on the retrieved username
-               user_info = load_user_data(username)
                classified_label, prediction = predict_parkinsons(image_data)
                # Generate PDF
-               pdf_buffer = generate_pdf(classified_label ,user_info,prediction, image_data)
+               pdf_buffer = generate_pdf(classified_label, prediction, image_data)
                
                # Print prediction result
                st.write(f"Spiral Drawing Classification: {classified_label}")
@@ -263,21 +200,12 @@ if LOGGED_IN:
             unique_id = uuid.uuid4().hex
             filename = f"user_input_{unique_id}.png"
             return filename
-         def load_user_data(username):
-            try:
-               with open('_secret_auth_.json', 'r') as file:
-                     data = json.load(file)
-                     for user in data:
-                        if user.get('username') == username:
-                           return user
-            except (FileNotFoundError, json.JSONDecodeError):
-               return None
 
-         # Function to generate PDF report
-         def generate_pdf(classified_label, user_info, confidence_score, image_data):
+         # Function to generate PDF
+         def generate_pdf(classified_label, confidence_score, image_data):
             buffer = io.BytesIO()
             c = canvas.Canvas(buffer, pagesize=letter)
-
+            
             # Set font
             c.setFont("Helvetica", 12)
 
@@ -286,43 +214,26 @@ if LOGGED_IN:
             c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
 
             # Set text color to black
-            c.setFillColorRGB(0, 0, 0)
+            c.setFillColorRGB(0, 0, 0) 
 
-            if user_info:
-               username = user_info.get('name', 'Unknown')
-               email = user_info.get('email', 'Unknown')
+            c.drawString(100, 630, "Spiral Drawing: ")
+            # Draw the uploaded image on the PDF
+            pil_image = Image.fromarray(image_data.astype("uint8"), "RGB")
+            c.drawImage(ImageReader(pil_image), 100, 400, width=200, height=200)  # Adjusted y coordinate
 
-               c.setFont("Helvetica", 15) 
-               c.setFillColorRGB(0, 0, 0)  
-               # Draw user information before main report content
-               c.drawString(80, 640, f"Name: {username}")
-               c.drawString(80, 620, f"Email: {email}")
-               # Time of report generation
-               current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-               c.drawString(80, 600, f"Time: {current_time}")
-
-               # Main report content
-               c.setFont("Helvetica-Bold", 15)
-               # voice_image_path = "voice.jpeg"
-               # c.drawImage(voice_image_path, x=80, y=530, width=40, height=40)
-
-               c.setFillColorRGB(0.647, 0.165, 0.165)  
-               c.drawString(80, 530, "Parkinson's Disease Prediction Report - Visual Input Spiral Model")
-         
-               c.drawString(100, 230, "Spiral Drawing Classification:")
-               c.drawString(100, 200, f"The model has detected as {classified_label}")
-               
-               c.drawString(100, 480, "Spiral Drawing: ")
+            # Write text to PDF
+            c.drawString(100, 380, "Parkinson's Disease Prediction Report")
+            # c.drawString(100, 730, "------------------------------------------")
+            c.drawString(100, 350, "Spiral Drawing Classification:")
+            c.drawString(100, 330, f"{classified_label}")
             
-               pil_image = Image.fromarray(image_data.astype("uint8"), "RGB")
-               c.drawImage(ImageReader(pil_image), 225, 270, width=200, height=200)  # Adjusted y coordinate
-
-            else:
-               c.drawString(100, 550, "User data not available")
-
+            # Add predicted label and confidence score
+            # c.drawString(100, 360, f"Predicted Label: {classified_label}")
+            
             c.save()
             buffer.seek(0)
             return buffer
+
 
          # Function to predict Parkinson's disease
          def predict_parkinsons(image_data):
@@ -343,60 +254,50 @@ if LOGGED_IN:
             prediction = model.predict(data)
             confidence_score = prediction[0][0]  # Assuming 0 is the index for Parkinson's class
 
-            # Determine classification label based on confidence score
+            # Prepare result message
             if confidence_score >= 0.5:
                classified_label = "Healthy"
             else:
-               classified_label = "Parkinsons diseased"
+               classified_label = "Parkinson's"
 
             return classified_label, confidence_score
 
          # Main interface
-         def main():
-            st.header("Detecting Parkinson's Disease - Visual Input Spiral Model")
+         st.header("Detecting Parkinson's Disease - Visual Input Spiral Model")
 
-            st.write("Upload an image to classify into Healthy or Parkinson's.")
-            st.warning("Warning: Supported image formats: PNG, JPG, JPEG.")
+         st.write("Upload an image to classify into Healthy or Parkinson's.")
+         st.warning("Warning: Supported image formats: PNG, JPG, JPEG.")
 
-            uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
+         uploaded_file = st.file_uploader("Choose an image...", type=["png", "jpg", "jpeg"])
 
-            # Process the image and make a prediction
-            if st.button("Classify") and uploaded_file is not None:
-               # Open the uploaded image
-               image = Image.open(uploaded_file).convert("RGB")
+         # Process the image and make a prediction
+         if st.button("Classify") and uploaded_file is not None:
+            # Open the uploaded image
+            image = Image.open(uploaded_file).convert("RGB")
 
-               # Resize the image to be at least 224x224 and then crop from the center
-               size = (224, 224)
-               image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+            # Resize the image to be at least 224x224 and then crop from the center
+            size = (224, 224)
+            image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
 
-               # Convert the image into a numpy array
-               image_array = np.asarray(image)
+            # Convert the image into a numpy array
+            image_array = np.asarray(image)
 
-               # Make prediction
-               classified_label, confidence_score = predict_parkinsons(image_array)
+            # Make prediction
+            classified_label, confidence_score = predict_parkinsons(image_array)
 
-               # Generate PDF with prediction and user info
-               username = st.session_state.username
+            # Print prediction for debugging
+            print("Predicted Label:", classified_label)
+            print("Confidence Score:", confidence_score)
 
-               # Load user data based on the retrieved username
-               user_info = load_user_data(username) # Load user info based on username
-               pdf_buffer = generate_pdf(classified_label, user_info, confidence_score, image_array)
+            # Generate PDF with prediction
+            pdf_buffer = generate_pdf(classified_label, confidence_score, image_array)
 
-               # Display the classification result
-               st.subheader("Classification Result:")
-               st.write(f"The model has classified the image as {classified_label}")
+            # Display the result
+            st.subheader("Classification Result:")
+            st.write(f"The model has classified the image as {classified_label} ")
 
-               # Download PDF report
-               st.download_button(
-                     label="Download PDF",
-                     data=pdf_buffer,
-                     file_name="parkinson_classification_report.pdf",
-                     mime="application/pdf",
-                     key="pdf-download"
-               )
-
-         if __name__ == "__main__":
-            main()
+            # Download PDF
+            st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_classification_report.pdf", mime="application/pdf", key="pdf-download")
 
    if (selected == 'Voice Model'):
     
@@ -469,24 +370,16 @@ if LOGGED_IN:
 
          # Display the prediction result
          if prediction == 1:
-               st.error("Based on the input data, the person is likely to have Parkinson's disease.")
+            st.error("Based on the input data, the person is likely to have Parkinson's disease.")
          else:
-               st.success("Based on the input data, the person is not likely to have Parkinson's disease.")
+            st.success("Based on the input data, the person is not likely to have Parkinson's disease.")
 
          st.write("Please enter the medical record values in the input fields above and click the 'Predict' button.")
-         def load_user_data(username):
-            try:
-               with open('_secret_auth_.json', 'r') as file:
-                     data = json.load(file)
-                     if isinstance(data, list):
-                        for user in data:
-                           if user.get('username') == username:
-                                 return user
-            except (FileNotFoundError, json.JSONDecodeError):
-               return None
 
-         # Function to generate PDF report
-         def generate_pdf(user_info, prediction):
+         
+
+         # Function to generate PDF
+         def generate_pdf(prediction):
             buffer = io.BytesIO()
             c = canvas.Canvas(buffer, pagesize=letter)
 
@@ -495,68 +388,27 @@ if LOGGED_IN:
             c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
 
             # Set text color to black
-            c.setFillColorRGB(0, 0, 0)
+            c.setFillColorRGB(0, 0, 0)  
 
-            # Retrieve user information
-            if user_info:
-               username = user_info.get('name', 'Unknown')
-               email = user_info.get('email', 'Unknown')
+            # Draw report content
+            # c.drawString(100, 570, "Parkinson's Disease Prediction Report - Voice Model")
+            c.setFont("Helvetica-Bold", 15)
+            voice_image_path = "voice.jpeg"
+            c.drawImage(voice_image_path, x=80, y=530, width=60, height=60)
 
-               c.setFont("Helvetica", 15) 
-               c.setFillColorRGB(0, 0, 0)  # Reset font to non-bold
-               # Draw user information before main report content
-               c.drawString(80, 640, f"Name: {username}")
-               c.drawString(80, 620, f"Email: {email}")
-               # Time of report generation
-               current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-               c.drawString(80, 600, f"Time: {current_time}")
-
-               # Main report content
-               c.setFont("Helvetica-Bold", 15)
-               # voice_image_path = "voice.jpeg"
-               # c.drawImage(voice_image_path, x=80, y=530, width=40, height=40)
-
-               c.setFillColorRGB(0.647, 0.165, 0.165)  
-               c.drawString(125, 490, "Parkinson's Disease Prediction Report - Voice Model")
-               y_position = 490
-
-               c.drawString(60, y_position - 60, "Prediction Result:")
-               prediction = 1  # Assuming prediction result for example
-               if prediction == 1:
-                  c.drawString(60, y_position - 100, "Based on the input data, the person is likely to have Parkinson's disease.")
-               else:
-                  c.drawString(60, y_position - 100, "Based on the input data, the person is not likely to have Parkinson's disease.")
-
-               
+            c.drawString(150, 550, "Parkinson's Disease Prediction Report - Voice Model")
+            y_position = 500
+            
+            c.drawString(100, y_position - 20, "Prediction Result:")
+            if prediction == 1:
+               c.drawString(100, y_position - 100, "Based on the input data, the person is likely to have Parkinson's disease.")
             else:
-               c.drawString(100, 550, "User data not available")
+               c.drawString(100, y_position - 100, "Based on the input data, the person is not likely to have Parkinson's disease.")
 
-            # Save and return the PDF buffer
             c.save()
             buffer.seek(0)
-            return buffer
+            return buffer 
 
-         # Main Streamlit app code
-         def main():
-            
-            # Check if user is logged in
-            if 'username' not in st.session_state:
-               st.warning("Please log in to view this page.")
-               return
-
-            # Retrieve authenticated user's information
-            username = st.session_state.username
-            user_info = load_user_data(username)
-
-            # Generate PDF report for the authenticated user
-            if user_info:
-               st.write(f"Generated PDF report for {username}...")
-               prediction = 1  # Placeholder for prediction result (replace with actual prediction)
-               pdf_buffer = generate_pdf(user_info, prediction)
-               st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
-            else:
-               st.warning("User data not found.")
-
-         # Run the app
-         if __name__ == "__main__":
-            main()
+         # Generate and download PDF
+         pdf_buffer = generate_pdf(prediction)
+         st.download_button(label="Download PDF", data=pdf_buffer, file_name="parkinson_prediction_report.pdf", mime="application/pdf", key="pdf-download")
