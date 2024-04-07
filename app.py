@@ -122,7 +122,7 @@ if LOGGED_IN:
             c.setFont("Helvetica", 12)
 
             # Draw background image containing logo and disclaimer
-            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            background_image_path = "receipt3.jpg"  # Replace with the path to your background image
             c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
 
             # Set text color to black
@@ -282,7 +282,7 @@ if LOGGED_IN:
             c.setFont("Helvetica", 12)
 
             # Draw background image containing logo and disclaimer
-            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            background_image_path = "receipt3.jpg"  # Replace with the path to your background image
             c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
 
             # Set text color to black
@@ -489,7 +489,7 @@ if LOGGED_IN:
             c = canvas.Canvas(buffer, pagesize=letter)
 
             # Draw background image containing logo and disclaimer
-            background_image_path = "receipt3.png"  # Replace with the path to your background image
+            background_image_path = "receipt3.jpg"  # Replace with the path to your background image
             c.drawImage(background_image_path, 0, 0, width=letter[0], height=letter[1])
 
             # Set text color to black
