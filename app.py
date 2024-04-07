@@ -63,8 +63,8 @@ if LOGGED_IN:
    # sidebar navigation
    with st.sidebar:
       st.markdown(
-            f'<h2 style="font-size:18px;margin-bottom: 0;">Hi,</h2>'
-            f'<p style="font-size:28px; color:red;">{st.session_state.username}</p>', 
+            f'<h2 style="font-size:18px;margin-bottom: -10;"></h2>'
+            f'<p style="font-size:28px; color:black;">Hi,{st.session_state.username}👋</p>', 
             unsafe_allow_html=True
         )
       
@@ -325,7 +325,7 @@ if LOGGED_IN:
          # Function to predict Parkinson's disease
          def predict_parkinsons(image_data):
             # Load your model and labels here
-            model = load_model("spiral/keras_Model.h5", compile=False)
+            model = load_model("spiral/keras_model.h5", compile=False)
             class_names = open("spiral/labels.txt", "r").readlines()
 
             # Create the array of the right shape to feed into the Keras model

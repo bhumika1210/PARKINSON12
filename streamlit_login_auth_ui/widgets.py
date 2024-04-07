@@ -99,6 +99,7 @@ class __login__:
 
             del_login = st.empty()
             with del_login.form("Login Form"):
+                
                 username = st.text_input("Username", placeholder = 'Your unique username')
                 password = st.text_input("Password", placeholder = 'Your password', type = 'password')
 
@@ -123,6 +124,8 @@ class __login__:
         """
         Renders the lottie animation.
         """
+        st.write("") 
+        st.write("") 
         lottie_json = load_lottieurl(self.lottie_url)
         st_lottie(lottie_json, width = self.width, height = self.height)
 
@@ -251,7 +254,10 @@ class __login__:
         Creates the side navigaton bar
         """
         main_page_sidebar = st.sidebar.empty()
+
         with main_page_sidebar:
+             # Add logo
+            
             selected_option = option_menu(
                 menu_title = 'Navigation',
                 menu_icon = 'list-columns-reverse',
@@ -297,16 +303,24 @@ class __login__:
             with open("_secret_auth_.json", "w") as auth_json:
                 json.dump([], auth_json)
 
+        disclaimer_text = (
+            "<div style='color: red; font-weight: bold;'>"
+            "OUR AI TOOL HELPS IDENTIFY POTENTIAL SIGNS OF PARKINSON'S. "
+            "HOWEVER, A DOCTOR'S EVALUATION IS CRUCIAL FOR ACCURATE DIAGNOSIS AND PERSONALIZED CARE."
+            "</div>"
+        )
+        st.markdown(disclaimer_text, unsafe_allow_html=True)
+
         main_page_sidebar, selected_option = self.nav_sidebar()
 
         if selected_option == 'Login':
-            c1, c2 = st.columns([7,3])
+            c1, c2 = st.columns([7, 3])
             with c1:
                 self.login_widget()
-            with c2:
-                if st.session_state['LOGGED_IN'] == False:
-                    self.animation()
-        
+        with c2:
+            if st.session_state['LOGGED_IN'] == False:
+                self.animation()
+
         if selected_option == 'Create Account':
             self.sign_up_widget()
 
@@ -315,17 +329,16 @@ class __login__:
 
         if selected_option == 'Reset Password':
             self.reset_password()
-        
+
         self.logout_widget()
 
         if st.session_state['LOGGED_IN'] == True:
             main_page_sidebar.empty()
-        
+
         if self.hide_menu_bool == True:
             self.hide_menu()
-        
+
         if self.hide_footer_bool == True:
             self.hide_footer()
-        
-        return st.session_state['LOGGED_IN']
 
+        return st.session_state['LOGGED_IN']
