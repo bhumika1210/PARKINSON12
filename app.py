@@ -325,7 +325,7 @@ if LOGGED_IN:
          # Function to predict Parkinson's disease
          def predict_parkinsons(image_data):
             # Load your model and labels here
-            model = load_model("spiral/keras_Model.h5", compile=False)
+            model = load_model("spiral/keras_model.h5", compile=False)
             class_names = open("spiral/labels.txt", "r").readlines()
 
             # Create the array of the right shape to feed into the Keras model
