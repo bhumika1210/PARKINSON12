@@ -304,8 +304,8 @@ class __login__:
                 json.dump([], auth_json)
 
         disclaimer_text = (
-            "<div style='color: red; font-weight: bold;'>"
-            "OUR AI TOOL HELPS IDENTIFY POTENTIAL SIGNS OF PARKINSON'S. "
+            "<div style='color: #d73e40; font-weight: bold;'>"
+            "OUR AI TOOL HELPS IDENTIFY POTENTIAL SIGNS OF PARKINSON'S DISEASE. "
             "HOWEVER, A DOCTOR'S EVALUATION IS CRUCIAL FOR ACCURATE DIAGNOSIS AND PERSONALIZED CARE."
             "</div>"
         )
