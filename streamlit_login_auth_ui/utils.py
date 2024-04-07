@@ -173,31 +173,23 @@ def send_passwd_in_email(auth_token: str, username_forgot_passwd: str, email_for
     """
     Triggers an email to the user containing the randomly generated password.
     """
-    try:
-        payload = {
-            "to": {"email": email_forgot_passwd},
-            "content": {
-                "title": f"{company_name}: Login Password!",
-                "body": f"Hi {username_forgot_passwd},\n\nYour temporary login password is: {random_password}\n\nPlease reset your password at the earliest for security reasons.",
-            },
-            "data": {"info": "Please reset your password at the earliest for security reasons."},
+    client = Courier(auth_token = auth_token)
+
+    resp = client.send_message(
+    message={
+        "to": {
+        "email": email_forgot_passwd
+        },
+        "content": {
+        "title": company_name + ": Login Password!",
+        "body": "Hi! " + username_forgot_passwd + "," + "\n" + "\n" + "Your temporary login password is: " + random_password  + "\n" + "\n" + "{{info}}"
+        },
+        "data":{
+        "info": "Please reset your password at the earliest for security reasons."
         }
+    }
+    )
 
-        headers = {
-            "Authorization": f"Bearer {auth_token}",
-            "Content-Type": "application/json"
-        }
-
-        response = requests.post("https://api.courier.com/send", json=payload, headers=headers)
-
-        if response.status_code == 200:
-            print("Secure Password Sent Successfully!")  # Print success message
-        else:
-            print(f"Failed to send password email: {response.text}")  # Print failure message
-
-    except Exception as e:
-        print(f"An error occurred while sending password email: {str(e)}")  # Print exception message
-        
 def change_passwd(email_: str, random_password: str) -> None:
     """
     Replaces the old password with the newly generated password.

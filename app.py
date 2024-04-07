@@ -27,11 +27,11 @@ if 'login_state' not in st.session_state:
     st.session_state.username = ""
 
 __login__obj = __login__(auth_token="courier_auth_token",
-                         company_name="Shims",
+                         company_name="Parkin-Sight",
                          width=200, height=250,
                          logout_button_name='Logout', hide_menu_bool=False,
                          hide_footer_bool=False,
-                         lottie_url='https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
+                         lottie_url='https://lottie.host/230a88d1-53f2-4c62-85db-28d5f4a92a66/Lv3agOWDP5.json')
 
 def build_login_ui():
     return __login__obj.build_login_ui()
@@ -516,9 +516,13 @@ if LOGGED_IN:
     
 
                # Display prediction result
-               prediction_result = "likely to have Parkinson's disease." if prediction == 1 else "not likely to have Parkinson's disease."
-               c.drawString(60, 420, "Prediction Result: ")
-               c.drawString(60, 380, f"Based on the input data, the person is {prediction_result}")
+               if prediction == 1:
+                  prediction_result = "likely to have Parkinson's disease."
+               else:
+                  prediction_result = "not likely to have Parkinson's disease."
+
+               c.drawString(40, 420, "Prediction Result: ")
+               c.drawString(40, 380, f"Based on the input data, the person is {prediction_result}")
 
                
             else:
