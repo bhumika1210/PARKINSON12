@@ -317,9 +317,9 @@ class __login__:
             c1, c2 = st.columns([7, 3])
             with c1:
                 self.login_widget()
-        with c2:
-            if st.session_state['LOGGED_IN'] == False:
-                self.animation()
+            with c2:
+                if st.session_state['LOGGED_IN'] == False:
+                    self.animation()
 
         if selected_option == 'Create Account':
             self.sign_up_widget()
