@@ -316,6 +316,8 @@ class __login__:
         if selected_option == 'Login':
             c1, c2 = st.columns([7, 3])
             with c1:
+                st.write("") 
+                st.write("") 
                 self.login_widget()
             with c2:
                 if st.session_state['LOGGED_IN'] == False:
